@@ -1,8 +1,8 @@
 //
 //  WGCompareUtil.h
-//  Comikon
 //
-//  Created by Wen on 15/4/1.
+//
+//  Created by 7owen on 15/4/1.
 //
 
 #import <Foundation/Foundation.h>
