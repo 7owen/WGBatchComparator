@@ -52,7 +52,7 @@
     }
 }
 
-+ (NSComparator)createCompareWithLeftValueKeys:(NSArray*)leftValueKeys rightValueKeys:(NSArray*)rightValueKeys {
++ (NSComparator)createCompareWithLeftValueKeyPaths:(NSArray*)leftValueKeyPaths rightValueKeyPaths:(NSArray*)rightValueKeyPaths {
     NSComparator compareUtilResult = ^(id leftObject, id rightObject) {
         NSComparisonResult result = NSOrderedSame;
         for (int i = 0; i < leftValueKeys.count || i < rightValueKeys.count; ++i) {
@@ -61,8 +61,8 @@
             } else if (i >= rightValueKeys.count) {
                 result = NSOrderedAscending;
             } else {
-                id leftP = [leftObject valueForKey:[leftValueKeys objectAtIndex:i]];
-                id rightP = [rightObject valueForKey:[rightValueKeys objectAtIndex:i]];
+                id leftP = [leftObject valueForKeyPath:[leftValueKeys objectAtIndex:i]];
+                id rightP = [rightObject valueForKeyPath:[rightValueKeys objectAtIndex:i]];
                 
                 if (leftP && rightP) {
                     result = [leftP compare:rightP];
