@@ -55,14 +55,14 @@
 + (NSComparator)createCompareWithLeftValueKeyPaths:(NSArray*)leftValueKeyPaths rightValueKeyPaths:(NSArray*)rightValueKeyPaths {
     NSComparator compareUtilResult = ^(id leftObject, id rightObject) {
         NSComparisonResult result = NSOrderedSame;
-        for (int i = 0; i < leftValueKeys.count || i < rightValueKeys.count; ++i) {
-            if (i >= leftValueKeys.count) {
+        for (int i = 0; i < leftValueKeyPaths.count || i < rightValueKeyPaths.count; ++i) {
+            if (i >= leftValueKeyPaths.count) {
                 result = NSOrderedDescending;
-            } else if (i >= rightValueKeys.count) {
+            } else if (i >= rightValueKeyPaths.count) {
                 result = NSOrderedAscending;
             } else {
-                id leftP = [leftObject valueForKeyPath:[leftValueKeys objectAtIndex:i]];
-                id rightP = [rightObject valueForKeyPath:[rightValueKeys objectAtIndex:i]];
+                id leftP = [leftObject valueForKeyPath:[leftValueKeyPaths objectAtIndex:i]];
+                id rightP = [rightObject valueForKeyPath:[rightValueKeyPaths objectAtIndex:i]];
                 
                 if (leftP && rightP) {
                     result = [leftP compare:rightP];
@@ -100,7 +100,7 @@
                 SEL rightSEL = NSSelectorFromString([rightPropertys objectAtIndex:i]);
                 imp = (aIMP)[rightObject methodForSelector:rightSEL];
                 id rightP = imp?imp(rightObject, rightSEL):nil;
-
+                
                 if (leftP && rightP) {
                     result = [leftP compare:rightP];
                 } else {
