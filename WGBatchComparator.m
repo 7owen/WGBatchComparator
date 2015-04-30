@@ -10,21 +10,21 @@
 
 @implementation WGBatchComparator
 
-+ (void)leftEnumerator:(NSEnumerator*)leftEnumerator rightEnumerator:(NSEnumerator*)rightEnumerator compare:(NSComparator)compareBlock existOnBoth:(void(^)(id leftObjectBlock, id rightObject))existOnBoth onlyOnLeft:(void(^)(id object))onlyOnLeftBlock onlyOnRight:(void(^)(id object))onlyOnRightBlock {
++ (void)leftEnumerator:(NSEnumerator*)leftEnumerator rightEnumerator:(NSEnumerator*)rightEnumerator compare:(NSComparator)compareBlock existOnBoth:(void(^)(id leftObject, id rightObject))existOnBoth onlyOnLeft:(void(^)(id leftObject))onlyOnLeft onlyOnRight:(void(^)(id rightObject))onlyOnRight {
     
     id leftObj = [leftEnumerator nextObject];
     id rightObj = [rightEnumerator nextObject];
     while (leftObj || rightObj) {
         if (!rightObj) {
-            if (onlyOnLeftBlock) {
-                onlyOnLeftBlock(leftObj);
+            if (onlyOnLeft) {
+                onlyOnLeft(leftObj);
             } else {
                 break;
             }
             leftObj = [leftEnumerator nextObject];
         } else if (!leftObj) {
-            if (onlyOnRightBlock) {
-                onlyOnRightBlock(rightObj);
+            if (onlyOnRight) {
+                onlyOnRight(rightObj);
             } else {
                 break;
             }
@@ -38,13 +38,13 @@
                 leftObj = [leftEnumerator nextObject];
                 rightObj = [rightEnumerator nextObject];
             } else if (result == NSOrderedAscending) {
-                if (onlyOnLeftBlock) {
-                    onlyOnLeftBlock(leftObj);
+                if (onlyOnLeft) {
+                    onlyOnLeft(leftObj);
                 }
                 leftObj = [leftEnumerator nextObject];
             } else {
-                if (onlyOnRightBlock) {
-                    onlyOnRightBlock(rightObj);
+                if (onlyOnRight) {
+                    onlyOnRight(rightObj);
                 }
                 rightObj = [rightEnumerator nextObject];
             }
