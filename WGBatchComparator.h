@@ -9,7 +9,7 @@
 
 @interface WGBatchComparator : NSObject
 
-+ (void)leftEnumerator:(NSEnumerator*)leftEnumerator rightEnumerator:(NSEnumerator*)rightEnumerator compare:(NSComparator)compareBlock existOnBoth:(void(^)(id leftObject, id rightObject))existOnBoth onlyOnLeft:(void(^)(id leftObject))onlyOnLeft onlyOnRight:(void(^)(id rightObject))onlyOnRight;
++ (void)sourceEnumerator:(NSEnumerator*)sourceEnumerator desEnumerator:(NSEnumerator*)desEnumerator compare:(NSComparator)compareBlock existOnDes:(void(^)(id sourceObj, id desObj))existOnDes notExistOnDes:(void(^)(id sourceObj))notExistOnDes;
 
 + (NSComparator)createCompareWithLeftValueKeys:(NSArray*)leftValueKeys rightValueKeys:(NSArray*)rightValueKeys;
 + (NSComparator)createCompareWithLeftValueKeyPaths:(NSArray*)leftValueKeyPaths rightValueKeyPaths:(NSArray*)rightValueKeyPaths;

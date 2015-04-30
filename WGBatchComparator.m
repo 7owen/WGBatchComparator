@@ -10,43 +10,31 @@
 
 @implementation WGBatchComparator
 
-+ (void)leftEnumerator:(NSEnumerator*)leftEnumerator rightEnumerator:(NSEnumerator*)rightEnumerator compare:(NSComparator)compareBlock existOnBoth:(void(^)(id leftObject, id rightObject))existOnBoth onlyOnLeft:(void(^)(id leftObject))onlyOnLeft onlyOnRight:(void(^)(id rightObject))onlyOnRight {
-    
-    id leftObj = [leftEnumerator nextObject];
-    id rightObj = [rightEnumerator nextObject];
-    while (leftObj || rightObj) {
-        if (!rightObj) {
-            if (onlyOnLeft) {
-                onlyOnLeft(leftObj);
++ (void)sourceEnumerator:(NSEnumerator*)sourceEnumerator desEnumerator:(NSEnumerator*)desEnumerator compare:(NSComparator)compareBlock existOnDes:(void(^)(id sourceObj, id desObj))existOnDes notExistOnDes:(void(^)(id sourceObj))notExistOnDes {
+    id sourceObj = [sourceEnumerator nextObject];
+    id desObj = [desEnumerator nextObject];
+    while (sourceObj) {
+        if (!desObj) {
+            if (notExistOnDes) {
+                notExistOnDes(desObj);
             } else {
                 break;
             }
-            leftObj = [leftEnumerator nextObject];
-        } else if (!leftObj) {
-            if (onlyOnRight) {
-                onlyOnRight(rightObj);
-            } else {
-                break;
-            }
-            rightObj = [rightEnumerator nextObject];
+            sourceObj = [sourceEnumerator nextObject];
         } else {
-            NSComparisonResult result = compareBlock(leftObj, rightObj);
+            NSComparisonResult result = compareBlock(sourceObj, desObj);
             if (result == NSOrderedSame) {
-                if (existOnBoth) {
-                    existOnBoth(leftObj, rightObj);
+                if (existOnDes) {
+                    existOnDes(sourceObj, desObj);
                 }
-                leftObj = [leftEnumerator nextObject];
-                rightObj = [rightEnumerator nextObject];
+                sourceObj = [sourceEnumerator nextObject];
             } else if (result == NSOrderedAscending) {
-                if (onlyOnLeft) {
-                    onlyOnLeft(leftObj);
+                if (notExistOnDes) {
+                    notExistOnDes(sourceObj);
                 }
-                leftObj = [leftEnumerator nextObject];
+                sourceObj = [sourceEnumerator nextObject];
             } else {
-                if (onlyOnRight) {
-                    onlyOnRight(rightObj);
-                }
-                rightObj = [rightEnumerator nextObject];
+                desObj = [desEnumerator nextObject];
             }
         }
     }
@@ -64,15 +52,7 @@
                 id leftP = [leftObject valueForKey:[leftValueKeys objectAtIndex:i]];
                 id rightP = [rightObject valueForKey:[rightValueKeys objectAtIndex:i]];
                 
-                if (leftP && rightP) {
-                    result = [leftP compare:rightP];
-                } else {
-                    if (leftP) {
-                        result = NSOrderedDescending;
-                    } else {
-                        result = NSOrderedAscending;
-                    }
-                }
+                result = [self compareLeftObj:leftP rightObj:rightP];
             }
             if ((result != NSOrderedSame)) {
                 break;
@@ -95,15 +75,7 @@
                 id leftP = [leftObject valueForKeyPath:[leftValueKeyPaths objectAtIndex:i]];
                 id rightP = [rightObject valueForKeyPath:[rightValueKeyPaths objectAtIndex:i]];
                 
-                if (leftP && rightP) {
-                    result = [leftP compare:rightP];
-                } else {
-                    if (leftP) {
-                        result = NSOrderedDescending;
-                    } else {
-                        result = NSOrderedAscending;
-                    }
-                }
+                result = [self compareLeftObj:leftP rightObj:rightP];
             }
             if ((result != NSOrderedSame)) {
                 break;
@@ -132,15 +104,7 @@
                 imp = (aIMP)[rightObject methodForSelector:rightSEL];
                 id rightP = imp?imp(rightObject, rightSEL):nil;
                 
-                if (leftP && rightP) {
-                    result = [leftP compare:rightP];
-                } else {
-                    if (leftP) {
-                        result = NSOrderedDescending;
-                    } else {
-                        result = NSOrderedAscending;
-                    }
-                }
+                result = [self compareLeftObj:leftP rightObj:rightP];
             }
             if ((result != NSOrderedSame)) {
                 break;
@@ -149,6 +113,20 @@
         return result;
     };
     return compareUtilResult;
+}
+
++ (NSComparisonResult)compareLeftObj:(id)leftObj rightObj:(id)rightObj {
+    BOOL leftCanCompare = [leftObj respondsToSelector:@selector(compare:)];
+    BOOL rightCanCompare = [rightObj respondsToSelector:@selector(compare:)];
+    if (leftCanCompare && rightCanCompare) {
+        return [leftObj compare:rightObj];
+    } else {
+        if (leftCanCompare) {
+            return NSOrderedDescending;
+        } else {
+            return NSOrderedAscending;
+        }
+    }
 }
 
 @end
