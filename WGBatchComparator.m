@@ -16,7 +16,7 @@
     while (sourceObj) {
         if (!desObj) {
             if (notExistOnDes) {
-                notExistOnDes(desObj);
+                notExistOnDes(sourceObj);
             } else {
                 break;
             }
