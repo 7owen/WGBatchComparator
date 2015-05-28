@@ -116,6 +116,10 @@
 }
 
 + (NSComparisonResult)compareLeftObj:(id)leftObj rightObj:(id)rightObj {
+    if (leftObj && rightObj && [leftObj class] != [rightObj class]) {
+        leftObj = [leftObj description];
+        rightObj = [rightObj description];
+    }
     BOOL leftCanCompare = [leftObj respondsToSelector:@selector(compare:)];
     BOOL rightCanCompare = [rightObj respondsToSelector:@selector(compare:)];
     if (leftCanCompare && rightCanCompare) {
