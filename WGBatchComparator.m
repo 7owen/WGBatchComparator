@@ -116,13 +116,13 @@
 }
 
 + (NSComparisonResult)compareLeftObj:(id)leftObj rightObj:(id)rightObj {
-    if (leftObj && rightObj && [leftObj class] != [rightObj class]) {
-        leftObj = [leftObj description];
-        rightObj = [rightObj description];
-    }
     BOOL leftCanCompare = [leftObj respondsToSelector:@selector(compare:)];
     BOOL rightCanCompare = [rightObj respondsToSelector:@selector(compare:)];
     if (leftCanCompare && rightCanCompare) {
+        if (![leftObj isKindOfClass:[rightObj class]]) {
+            leftObj = [leftObj description];
+            rightObj = [rightObj description];
+        }
         return [leftObj compare:rightObj];
     } else {
         if (leftCanCompare) {
