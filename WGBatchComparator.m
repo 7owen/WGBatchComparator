@@ -8,6 +8,8 @@
 
 #import "WGBatchComparator.h"
 
+typedef void(^WGBatchComparatorGetValuesBlock)(NSString *key, id object, id *outValue);
+
 @implementation WGBatchComparator
 
 + (void)sourceEnumerator:(NSEnumerator*)sourceEnumerator desEnumerator:(NSEnumerator*)desEnumerator compare:(NSComparator)compareBlock existOnDes:(void(^)(id sourceObj, id desObj))existOnDes notExistOnDes:(void(^)(id sourceObj))notExistOnDes {
@@ -41,78 +43,26 @@
 }
 
 + (NSComparator)createCompareWithLeftValueKeys:(NSArray*)leftValueKeys rightValueKeys:(NSArray*)rightValueKeys {
-    NSComparator compareUtilResult = ^(id leftObject, id rightObject) {
-        NSComparisonResult result = NSOrderedSame;
-        for (int i = 0; i < leftValueKeys.count || i < rightValueKeys.count; ++i) {
-            if (i >= leftValueKeys.count) {
-                result = NSOrderedDescending;
-            } else if (i >= rightValueKeys.count) {
-                result = NSOrderedAscending;
-            } else {
-                id leftP = [leftObject valueForKey:[leftValueKeys objectAtIndex:i]];
-                id rightP = [rightObject valueForKey:[rightValueKeys objectAtIndex:i]];
-                
-                result = [self compareLeftObj:leftP rightObj:rightP];
-            }
-            if ((result != NSOrderedSame)) {
-                break;
-            }
-        }
-        return result;
-    };
-    return compareUtilResult;
+    return [self createCompareWithLeftValueKeys:leftValueKeys rightValueKeys:rightValueKeys getValuesBlock:^(NSString *key, id object, __autoreleasing id *outValue) {
+        *outValue = [object valueForKey:key];
+    }];
 }
 
 + (NSComparator)createCompareWithLeftValueKeyPaths:(NSArray*)leftValueKeyPaths rightValueKeyPaths:(NSArray*)rightValueKeyPaths {
-    NSComparator compareUtilResult = ^(id leftObject, id rightObject) {
-        NSComparisonResult result = NSOrderedSame;
-        for (int i = 0; i < leftValueKeyPaths.count || i < rightValueKeyPaths.count; ++i) {
-            if (i >= leftValueKeyPaths.count) {
-                result = NSOrderedDescending;
-            } else if (i >= rightValueKeyPaths.count) {
-                result = NSOrderedAscending;
-            } else {
-                id leftP = [leftObject valueForKeyPath:[leftValueKeyPaths objectAtIndex:i]];
-                id rightP = [rightObject valueForKeyPath:[rightValueKeyPaths objectAtIndex:i]];
-                
-                result = [self compareLeftObj:leftP rightObj:rightP];
-            }
-            if ((result != NSOrderedSame)) {
-                break;
-            }
-        }
-        return result;
-    };
-    return compareUtilResult;
+    
+    return [self createCompareWithLeftValueKeys:leftValueKeyPaths rightValueKeys:rightValueKeyPaths getValuesBlock:^(NSString *key, id object, __autoreleasing id *outValue) {
+        *outValue = [object valueForKeyPath:key];
+    }];
 }
 
 + (NSComparator)createCompareByLeftPropertys:(NSArray*)leftPropertys rightPropertys:(NSArray*)rightPropertys {
-    NSComparator compareUtilResult = ^(id leftObject, id rightObject) {
-        NSComparisonResult result = NSOrderedSame;
-        for (int i = 0; i < leftPropertys.count || i < rightPropertys.count; ++i) {
-            if (i >= leftPropertys.count) {
-                result = NSOrderedDescending;
-            } else if (i >= rightPropertys.count) {
-                result = NSOrderedAscending;
-            } else {
-                typedef id(*aIMP)(id, SEL, ...);
-                SEL leftSEL = NSSelectorFromString([leftPropertys objectAtIndex:i]);
-                aIMP imp = (aIMP)[leftObject methodForSelector:leftSEL];
-                id leftP = imp?imp(leftObject, leftSEL):nil;
-                
-                SEL rightSEL = NSSelectorFromString([rightPropertys objectAtIndex:i]);
-                imp = (aIMP)[rightObject methodForSelector:rightSEL];
-                id rightP = imp?imp(rightObject, rightSEL):nil;
-                
-                result = [self compareLeftObj:leftP rightObj:rightP];
-            }
-            if ((result != NSOrderedSame)) {
-                break;
-            }
-        }
-        return result;
-    };
-    return compareUtilResult;
+    typedef id(*aIMP)(id, SEL, ...);
+    return [self createCompareWithLeftValueKeys:leftPropertys rightValueKeys:rightPropertys getValuesBlock:^(NSString *key, id object, __autoreleasing id *outValue) {
+        SEL aSEL = NSSelectorFromString(key);
+        aIMP imp = (aIMP)[object methodForSelector:aSEL];
+        *outValue = imp?imp(object, aSEL):nil;
+    }];
+    
 }
 
 + (NSComparisonResult)compareLeftObj:(id)leftObj rightObj:(id)rightObj {
@@ -131,6 +81,44 @@
             return NSOrderedAscending;
         }
     }
+}
+
+#pragma mark private
+
++ (NSComparator)createCompareWithLeftValueKeys:(NSArray*)leftValueKeys rightValueKeys:(NSArray*)rightValueKeys getValuesBlock:(WGBatchComparatorGetValuesBlock)getValuesBlock {
+    NSComparator compareUtilResult = ^(id leftObject, id rightObject) {
+        NSComparisonResult result = NSOrderedSame;
+        for (int i = 0; i < leftValueKeys.count || i < rightValueKeys.count; ++i) {
+            if (i >= leftValueKeys.count) {
+                result = NSOrderedDescending;
+            } else if (i >= rightValueKeys.count) {
+                result = NSOrderedAscending;
+            } else {
+                id leftP = nil;
+                NSString *leftKey = [leftValueKeys objectAtIndex:i];
+                if ([[leftKey lowercaseString] isEqualToString:@"self"]) {
+                    leftP = leftObject;
+                } else {
+                    getValuesBlock(leftKey, leftObject, &leftP);
+                }
+                
+                id rightP = nil;
+                NSString *rightKey = [rightValueKeys objectAtIndex:i];
+                if ([[rightKey lowercaseString]isEqualToString:@"self"]) {
+                    rightP = rightObject;
+                } else {
+                    getValuesBlock(rightKey, rightObject, &rightP);
+                }
+                
+                result = [self compareLeftObj:leftP rightObj:rightP];
+            }
+            if ((result != NSOrderedSame)) {
+                break;
+            }
+        }
+        return result;
+    };
+    return compareUtilResult;
 }
 
 @end
